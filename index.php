@@ -130,7 +130,7 @@
             },
         ];
 
-        console.log('Available scenarios', scenario);
+        console.log('Available scenarios', scenarios);
 
         /**
          * Runs a random scenario
