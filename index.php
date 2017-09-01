@@ -58,8 +58,8 @@
 
             $app.html(
                 $('<iframe src="'+options.url+'" class="fullscreen"></iframe>').on('load', function() {
-                    let $iframe = $(this);
-                    let iframeWindow = $iframe.get(0).contentWindow || $iframe.get(0).contentDocument;
+                    const $iframe = $(this);
+                    const iframeWindow = $iframe.get(0).contentWindow || $iframe.get(0).contentDocument;
 
                     // Zoom
                     if (options.zoom) {
@@ -76,17 +76,19 @@
 
                     // Auto scroll
                     if (options.autoScroll) {
-                        let $body = $iframe.contents().find('body');
-                        var documentHeight = $body.get(0).scrollHeight;
 
-                        $body.animate(
-                            { scrollTop: documentHeight },
-                            {
-                                duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
-                                easing: "linear",
-                                complete: next,
-                            }
-                        );
+                        setTimeout(function autoScroll() {
+                            const $body = $iframe.contents().find('body');
+                            const documentHeight = $body.get(0).scrollHeight;
+                            $body.animate(
+                                { scrollTop: documentHeight },
+                                {
+                                    duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
+                                    easing: "linear",
+                                    complete: next,
+                                }
+                            );
+                        }, options.autoScrollDelay || 1);
                     }
                 })
             );
@@ -119,7 +121,16 @@
                     url: 'http://www.novius.com',
                 }),
             },
+            {
+                title: 'Laravel.com',
+                timeout: 20000,
+                handler: (next) => ScenarioHandlers.iframe(next, $app, {
+                    url: 'https://laravel.com/',
+                }),
+            },
         ];
+
+        console.log('Available scenarios', scenario);
 
         /**
          * Runs a random scenario
@@ -128,7 +139,7 @@
 
             // Gets a random scenario
             let scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-            console.log('scenario', scenario);
+            console.log('Scenario', scenario);
 
             // Checks requirements
             if (!scenario.handler) {
