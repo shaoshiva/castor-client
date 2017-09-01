@@ -36,6 +36,21 @@
 <script type="text/javascript">
     class ScenarioHandlers
     {
+        /**
+         * Displays an iframe
+         *
+         * Available options :
+         * {
+         *     url: 'http://example.com',
+         *     autoScroll: true,
+         *     autoScrollSpeed: 50,
+         *     zoom: 1.2,
+         * }
+         *
+         * @param next
+         * @param $app
+         * @param options
+         */
         static iframe(next, $app, options){
             if (typeof options !== 'object') {
                 options = {};
@@ -83,10 +98,13 @@
 
         const $app = $('.app');
 
+        /**
+         * Available scenarios
+         */
         const scenarios = [
             {
-                title: 'Test',
-                timeout: 30000,
+                title: 'Pull requests',
+                timeout: 60000,
                 handler: (next) => ScenarioHandlers.iframe(next, $app, {
                     url: 'http://pascal.lyon.novius.fr/git/pulls/',
                     autoScroll: true,
@@ -95,17 +113,22 @@
                 }),
             },
             {
-                title: 'Test',
-                timeout: 20000,
+                title: 'Novius.com',
+                timeout: 60000,
                 handler: (next) => ScenarioHandlers.iframe(next, $app, {
                     url: 'http://www.novius.com',
                 }),
             },
         ];
 
+        /**
+         * Runs a random scenario
+         */
         function run() {
+
+            // Gets a random scenario
             let scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-            console.log(scenario);
+            console.log('scenario', scenario);
 
             // Checks requirements
             if (!scenario.handler) {
@@ -122,6 +145,9 @@
             scenarioTimer = setTimeout(next, scenario.timeout || 10);
         }
 
+        /**
+         * Runs the next scenario
+         */
         function next()
         {
             // Clears the timeout in case the previous scenario triggered the next one before the timeout is triggered
