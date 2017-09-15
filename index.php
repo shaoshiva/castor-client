@@ -11,10 +11,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/css/foundation.min.css" />
 
     <style type="text/css">
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             width: 100%;
             height: 100%;
+            position: relative;
             overflow: hidden;
+            display: block;
+            min-height: 100vh;
+            font-family: 'Ubuntu', sans-serif;
+            background-image: -webkit-radial-gradient(100% 250% at 50% -25%, #6eaad1 0%, #0a3772 60%);
+            background-image: radial-gradient(100% 250% at 50% -25%, #6eaad1 0%, #0a3772 60%);
         }
         iframe {
             border: 0;
@@ -28,12 +38,21 @@
             width: 100%;
             height: 100%;
         }
+
+        .loading .logo {
+            position: absolute;
+            top: 2rem;
+            left: 50%;
+            -webkit-transform: translateX(-50%);
+            transform: translateX(-50%);
+            max-width: 350px;
+        }
     </style>
 </head>
 <body>
 
 <div class="app loading">
-    Loading...
+    <img class="logo" src="http://www.novius.com/static/apps/agency_template/img/logo.png" alt="logo"/>
 </div>
 
 <script type="text/javascript">
@@ -79,7 +98,8 @@
          * @param next
          * @param options
          */
-        iframe: function(next, options){
+        iframe: function(next, options)
+        {
             if (typeof options !== 'object') {
                 options = {};
             }
@@ -122,6 +142,21 @@
         },
 
         /**
+         * Displays a message
+         *
+         * @param next
+         * @param options
+         */
+        message: function(next, options)
+        {
+            if (typeof options !== 'object') {
+                options = {};
+            }
+
+            this.html(options.content || '');
+        },
+
+        /**
          * Displays HTML content
          *
          * Available options :
@@ -135,91 +170,166 @@
          * @param next
          * @param options
          */
-        html: function(next, options){
+        html: function(next, options)
+        {
             if (typeof options !== 'object') {
                 options = {};
             }
 
             this.html(options.content || '');
-        }
+        },
     };
 
-    $(function() {
+    $(function()
+    {
         const $app = $('.app');
 
-        const ws = createWebSocket();
+        var lostConnections, failedConnections, failedConsecutiveConnection = 0;
 
-        // Handles actions sent by server
-        ws.onmessage = function incoming(message) {
-            var data = message.data;
+        var restarting = false;
 
-            // Tries parsing the message as JSON
+        function start()
+        {
+            var connectionOpened = false;
+
             try {
-                if (typeof data === 'string' && data[0] === '{') {
-                    const dataObject = JSON.parse(data);
-                    if (typeof dataObject === 'object') {
-                        data = dataObject;
+                console.log('Opening connection to server...');
+                const ws = createWebSocket();
+
+                // Handles actions sent by server
+                ws.onmessage = function incoming(message) {
+                    var data = message.data;
+
+                    // Tries parsing the message as JSON
+                    try {
+                        if (typeof data === 'string' && data[0] === '{') {
+                            const dataObject = JSON.parse(data);
+                            if (typeof dataObject === 'object') {
+                                data = dataObject;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(e);
                     }
-                }
-            } catch(e) {
-                console.warn(e);
+
+                    console.log('Received message from server:', data);
+
+                    // Plain text data
+                    if (typeof data === 'string') {
+                        return;
+                    }
+
+                    // Object data
+                    else if (typeof data === 'object') {
+
+                        // Checks if action is specified
+                        if (!data.action) {
+                            console.warn('No action specified for object data.');
+                            return;
+                        }
+
+                        // Handles actions
+                        switch (data.action) {
+
+                            // Resets (reloads current page)
+                            case 'reset':
+                                window.location.reload(false);
+                                break;
+
+                            // Runs a scenario
+                            case 'runScenario':
+                                if (data.data) {
+                                    runScenario(data.data);
+                                } else {
+                                    console.warn('No scenario.');
+                                }
+                                break;
+                        }
+                    }
+
+                    // Unknown format
+                    else {
+                        console.warn('Unknown data format :', data);
+                    }
+                };
+
+                // Waits for the connection to be opened
+                ws.onopen = function () {
+                    connectionOpened = true;
+                    restarting = false;
+                    failedConsecutiveConnection = 0;
+
+                    console.log("Connection to server successfuly established.");
+
+                    // Greetings
+                    ws.send('Hello, I am the client.');
+
+                    // Gets the current scenario
+                    ws.send({
+                        action: 'getCurrentScenario'
+                    });
+                };
+
+                // Tries to reconnect when connection is lost
+                ws.onclose = function () {
+                    // Connection lost
+                    console.log('Server connection lost.');
+
+                    if (connectionOpened) {
+                        lostConnections++;
+                    }
+                    if (!connectionOpened) {
+                        failedConnections++;
+                    }
+                    if (!connectionOpened && restarting) {
+                        failedConsecutiveConnection++;
+                    }
+
+                    // Restart server
+                    restart();
+                };
+
+            } catch (exception) {
+                restart();
+            }
+        }
+
+        /**
+         * Tries to restart the server after a delay
+         *
+         * @param delay
+         */
+        function restart(delay)
+        {
+            restarting = true;
+
+            // Reload entire page after 5 failed restarts
+            if (failedConsecutiveConnection >= 5) {
+                console.log('Failed to connect after 5 attempts.');
+                console.log('Refreshing page in 5 seconds...');
+                setTimeout(function() {
+                    window.location.reload(false);
+                }, 5000);
             }
 
-            console.log('Received message from server:', data);
-
-            // Plain text data
-            if (typeof data === 'string') {
-                return ;
-            }
-
-            // Object data
-            else if (typeof data === 'object') {
-
-                // Checks if action is specified
-                if (!data.action) {
-                    console.warn('No action specified for object data.');
-                    return;
-                }
-
-                // Handles actions
-                switch (data.action) {
-
-                    // Resets (reloads current page)
-                    case 'reset':
-                        window.location.reload(false);
-                        break;
-
-                    // Runs a scenario
-                    case 'runScenario':
-                        runScenario(data.data);
-                        break;
-                }
-            }
-
-            // Unknown format
+            // Try to reconnect in 5 seconds
             else {
-                console.warn('Unknown data format :', data);
+                attemptsLeft = 5 - failedConsecutiveConnection;
+                console.log('Trying to reconnect to server in 5 seconds... ('+(attemptsLeft === 1 ? 'last attempt' : ''+attemptsLeft+' attempts left')+')');
+                setTimeout(function () {
+                    start()
+                }, delay || 5000);
             }
-        };
+        }
 
-        // Waits for the connection to be opened
-        ws.onopen = function() {
-            console.log("Connection to server successfuly established.");
-
-            // Greetings
-            ws.send('Hello, I am the client.');
-
-            // Gets the current scenario
-            ws.send({
-                action: 'getCurrentScenario'
-            });
-        };
-
+        // Listen to server events
+        start();
 
         /**
          * Runs a scenario
          */
-        function runScenario(scenario) {
+        function runScenario(scenario)
+        {
             console.log('Running scenario:', scenario);
 
             // Checks requirements
@@ -243,6 +353,15 @@
             // Executes the scenario
             handler.apply($app, [runScenario, scenario.handlerOptions || {}]);
         }
+
+        // @todo remove this feature from client
+        window.runNextScenario = (id) => {
+            console.log('Telling the server to run the next scenario...');
+            ws.send({
+                action: 'runNextScenario',
+                id: id,
+            });
+        };
     });
 
 </script>
