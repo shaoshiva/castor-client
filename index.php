@@ -135,7 +135,7 @@
                                     easing: "linear",
                                 }
                             );
-                        }, options.autoScrollDelay || 1);
+                        }, options.autoScrollDelay || 2000);
                     }
                 })
             );
@@ -188,13 +188,15 @@
 
         var restarting = false;
 
+        var ws;
+
         function start()
         {
             var connectionOpened = false;
 
             try {
                 console.log('Opening connection to server...');
-                const ws = createWebSocket();
+                ws = createWebSocket();
 
                 // Handles actions sent by server
                 ws.onmessage = function incoming(message) {
@@ -285,6 +287,8 @@
                         failedConsecutiveConnection++;
                     }
 
+                    ws = null;
+
                     // Restart server
                     restart();
                 };
@@ -354,13 +358,43 @@
             handler.apply($app, [runScenario, scenario.handlerOptions || {}]);
         }
 
-        // @todo remove this feature from client
-        window.runNextScenario = (id) => {
-            console.log('Telling the server to run the next scenario...');
-            ws.send({
-                action: 'runNextScenario',
-                id: id,
-            });
+        /**
+         * Admin commands (temporary features)
+         *
+         * @type {{}}
+         */
+        window.admin = {
+            /**
+             * Runs a new scenario
+             */
+            runNewScenario: () => {
+                console.log('Telling the server to run a new scenario...');
+                if (ws) {
+                    ws.send({
+                        action: 'runNewScenario',
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            },
+            /**
+             * Runs the given scenario
+             *
+             * @param id ID of scenario
+             * @param options [Optional] Scenario options (eg. timeout, handler options...)
+             */
+            runScenario: (id, options) => {
+                console.log('Telling the server to run the given scenario...');
+                if (ws) {
+                    ws.send({
+                        action: 'runScenario',
+                        id: id,
+                        options: options || {}
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            }
         };
     });
 
