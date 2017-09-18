@@ -71,7 +71,7 @@
             console.log('Sending message to server:', message);
             ws.nativeSend(JSON.stringify({
                 token: REQUEST_TOKEN,
-                data: message,
+                payload: message,
             }));
         };
 
@@ -198,63 +198,6 @@
                 console.log('Opening connection to server...');
                 ws = createWebSocket();
 
-                // Handles actions sent by server
-                ws.onmessage = function incoming(message) {
-                    var data = message.data;
-
-                    // Tries parsing the message as JSON
-                    try {
-                        if (typeof data === 'string' && data[0] === '{') {
-                            const dataObject = JSON.parse(data);
-                            if (typeof dataObject === 'object') {
-                                data = dataObject;
-                            }
-                        }
-                    } catch (e) {
-                        console.warn(e);
-                    }
-
-                    console.log('Received message from server:', data);
-
-                    // Plain text data
-                    if (typeof data === 'string') {
-                        return;
-                    }
-
-                    // Object data
-                    else if (typeof data === 'object') {
-
-                        // Checks if action is specified
-                        if (!data.action) {
-                            console.warn('No action specified for object data.');
-                            return;
-                        }
-
-                        // Handles actions
-                        switch (data.action) {
-
-                            // Resets (reloads current page)
-                            case 'reset':
-                                window.location.reload(false);
-                                break;
-
-                            // Runs a scenario
-                            case 'runScenario':
-                                if (data.data) {
-                                    runScenario(data.data);
-                                } else {
-                                    console.warn('No scenario.');
-                                }
-                                break;
-                        }
-                    }
-
-                    // Unknown format
-                    else {
-                        console.warn('Unknown data format :', data);
-                    }
-                };
-
                 // Waits for the connection to be opened
                 ws.onopen = function () {
                     connectionOpened = true;
@@ -268,7 +211,7 @@
 
                     // Gets the current scenario
                     ws.send({
-                        action: 'getCurrentScenario'
+                        command: 'requestCurrentScenario'
                     });
                 };
 
@@ -293,8 +236,78 @@
                     restart();
                 };
 
+                // Handles incoming messages
+                ws.onmessage = function incoming(event) {
+                    handleMessage(event.data);
+                };
+
             } catch (exception) {
                 restart();
+            }
+        }
+
+        /**
+         * Handles an incoming message
+         */
+        function handleMessage(message)
+        {
+            // Tries parsing the message as JSON
+            try {
+                if (typeof message === 'string' && message[0] === '{') {
+                    const messageObject = JSON.parse(message);
+                    if (typeof messageObject === 'object') {
+                        message = messageObject;
+                    }
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+
+            // Plain text payload
+            if (typeof message === 'string') {
+                console.log('Received message from server: ', message);
+            }
+
+            // Object payload
+            else if (typeof message === 'object') {
+
+                console.log('Received message with payload from server: ', message);
+
+                // Gets the payload
+                let payload = message.payload;
+                if (typeof payload !== 'object') {
+                    console.warn('Invalid payload: object expected.');
+                    return ;
+                }
+
+                // Checks if command is specified
+                if (!payload.command) {
+                    console.warn('No command specified.');
+                    return;
+                }
+
+                // Handles commands
+                switch (payload.command) {
+
+                    // Resets (reloads current page)
+                    case 'reset':
+                        window.location.reload(false);
+                        break;
+
+                    // Runs a scenario
+                    case 'runScenario':
+                        if (payload.params && payload.params.scenario) {
+                            runScenario(payload.params.scenario);
+                        } else {
+                            console.warn('No scenario.');
+                        }
+                        break;
+                }
+            }
+
+            // Unknown format
+            else {
+                console.warn('Invalid message: string or object expected.');
             }
         }
 
@@ -355,7 +368,7 @@
             }
 
             // Executes the scenario
-            handler.apply($app, [runScenario, scenario.handlerOptions || {}]);
+            handler.apply($app, [runScenario, scenario.handler_options || {}]);
         }
 
         /**
@@ -367,16 +380,17 @@
             /**
              * Runs a new scenario
              */
-            runNewScenario: () => {
-                console.log('Telling the server to run a new scenario...');
+            reset: () => {
+                console.log('Telling the server to reset...');
                 if (ws) {
                     ws.send({
-                        action: 'runNewScenario',
+                        command: 'reset',
                     });
                 } else {
                     console.warn('Connection to server not available.');
                 }
             },
+
             /**
              * Runs the given scenario
              *
@@ -387,14 +401,70 @@
                 console.log('Telling the server to run the given scenario...');
                 if (ws) {
                     ws.send({
-                        action: 'runScenario',
-                        id: id,
-                        options: options || {}
+                        command: 'runScenario',
+                        params: {
+                            id: id,
+                            options: options || {},
+                        }
                     });
                 } else {
                     console.warn('Connection to server not available.');
                 }
-            }
+            },
+
+            /**
+             * Runs a new scenario
+             */
+            runRandomScenario: () => {
+                console.log('Telling the server to run a random scenario...');
+                if (ws) {
+                    ws.send({
+                        command: 'runRandomScenario',
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            },
+
+            /**
+             * Runs the given scenario
+             *
+             * @param options Scenario options (eg. timeout, handler options...)
+             */
+            createScenario: (options) => {
+                console.log('Telling the server to create the given scenario...');
+                if (ws) {
+                    ws.send({
+                        command: 'createScenario',
+                        params: {
+                            scenario: options,
+                            run: false,
+                        },
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            },
+
+            /**
+             * Runs the given scenario
+             *
+             * @param options Scenario options (eg. timeout, handler options...)
+             */
+            createAndRunScenario: (options) => {
+                console.log('Telling the server to create and run the given scenario...');
+                if (ws) {
+                    ws.send({
+                        command: 'createScenario',
+                        params: {
+                            scenario: options,
+                            run: true,
+                        },
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            },
         };
     });
 
