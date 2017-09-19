@@ -67,11 +67,11 @@
 
         // Overrides send method
         ws.nativeSend = ws.send;
-        ws.send = function(message) {
-            console.log('Sending message to server:', message);
+        ws.send = function(payload) {
+            console.log('Sending message with payload to server: ', payload);
             ws.nativeSend(JSON.stringify({
                 token: REQUEST_TOKEN,
-                payload: message,
+                payload: payload,
             }));
         };
 
@@ -127,14 +127,16 @@
 
                         setTimeout(function autoScroll() {
                             const $body = $iframe.contents().find('body');
-                            const documentHeight = $body.get(0).scrollHeight;
-                            $body.animate(
-                                { scrollTop: documentHeight },
-                                {
-                                    duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
-                                    easing: "linear",
-                                }
-                            );
+                            if ($body.length) {
+                                const documentHeight = $body.get(0).scrollHeight;
+                                $body.animate(
+                                    {scrollTop: documentHeight},
+                                    {
+                                        duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
+                                        easing: "linear",
+                                    }
+                                );
+                            }
                         }, options.autoScrollDelay || 2000);
                     }
                 })
@@ -458,6 +460,33 @@
                         command: 'createScenario',
                         params: {
                             scenario: options,
+                            run: true,
+                        },
+                    });
+                } else {
+                    console.warn('Connection to server not available.');
+                }
+            },
+
+            /**
+             * Displays the given message
+             *
+             * @param message
+             * @param options Scenario options (eg. timeout, handler options...)
+             */
+            displayMessage: (message, options) => {
+                console.log('Telling the server to create and run the given scenario...');
+                if (ws) {
+                    ws.send({
+                        command: 'createScenario',
+                        params: {
+                            scenario: Object.assign({
+                                name: "A temporary message",
+                                handler: "message",
+                                handler_options: {
+                                    message,
+                                }
+                            }, options || {}),
                             run: true,
                         },
                     });
