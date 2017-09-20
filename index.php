@@ -38,14 +38,13 @@
             width: 100%;
             height: 100%;
         }
-
         .loading .logo {
             position: absolute;
-            top: 2rem;
+            top: 1.75rem;
             left: 50%;
             -webkit-transform: translateX(-50%);
             transform: translateX(-50%);
-            max-width: 350px;
+            max-width: 250px;
         }
     </style>
 </head>
@@ -397,7 +396,7 @@
              * Runs the given scenario
              *
              * @param id ID of scenario
-             * @param options [Optional] Scenario options (eg. timeout, handler options...)
+             * @param options [Optional] Scenario options (eg. display_timeout, handler options...)
              */
             runScenario: (id, options) => {
                 console.log('Telling the server to run the given scenario...');
@@ -431,7 +430,7 @@
             /**
              * Runs the given scenario
              *
-             * @param options Scenario options (eg. timeout, handler options...)
+             * @param options Scenario options (eg. display_timeout, handler options...)
              */
             createScenario: (options) => {
                 console.log('Telling the server to create the given scenario...');
@@ -451,7 +450,7 @@
             /**
              * Runs the given scenario
              *
-             * @param options Scenario options (eg. timeout, handler options...)
+             * @param options Scenario options (eg. display_timeout, handler options...)
              */
             createAndRunScenario: (options) => {
                 console.log('Telling the server to create and run the given scenario...');
@@ -472,7 +471,7 @@
              * Displays the given message
              *
              * @param message
-             * @param options Scenario options (eg. timeout, handler options...)
+             * @param options Scenario options (eg. display_timeout, handler options...)
              */
             displayMessage: (message, options) => {
                 console.log('Telling the server to create and run the given scenario...');
