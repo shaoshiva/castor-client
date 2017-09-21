@@ -414,7 +414,7 @@
             },
 
             /**
-             * Runs a new scenario
+             * Runs a random scenario
              */
             runRandomScenario: () => {
                 console.log('Telling the server to run a random scenario...');
