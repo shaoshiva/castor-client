@@ -137,8 +137,8 @@
             // Sets the options
             this.options = Object.assign({
                 websocket: {
-                    url: 'ws://10.20.70.9:8099',
-                }
+                    url: 'ws://localhost:8099',
+                },
             }, options);
 
             // Registers the default scenario handlers
@@ -235,6 +235,8 @@
                         this.failedConsecutiveConnection++;
                     }
 
+                    this.connection = null;
+
                     // Restarts the server
                     this.restart();
                 };
@@ -270,8 +272,6 @@
         restart(delay)
         {
             this.restarting = true;
-
-            this.stop();
 
             // Reload entire page after 5 failed restarts
             if (this.failedConsecutiveConnection >= 5) {
