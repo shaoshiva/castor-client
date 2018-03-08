@@ -1,0 +1,15 @@
+{
+  "name": "novius-live-client",
+  "version": "0.1.0",
+  "description": "The Novius Live client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.lyon.novius.fr:novius/novius-live-client.git"
+  },
+  "author": "viney@novius.fr",
+  "license": "ISC"
+}
