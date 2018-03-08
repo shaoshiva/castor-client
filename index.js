@@ -198,6 +198,8 @@
          * Starts the client
          */
         start() {
+            this.connectionOpened = false;
+
             try {
                 // Creates the websocket connection
                 console.log('Opening connection to server...');
