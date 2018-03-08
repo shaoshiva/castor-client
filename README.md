@@ -2,11 +2,11 @@
 
 The client used to display the screens broadcasted by a Novius Live Server.
 
-# Install
+## Install
 
 `npm install "git+ssh://git@gitlab.lyon.novius.fr:novius/novius-live-client.git#master" --save`
 
-# Usage
+## Usage
 
 ```html
 <!DOCTYPE HTML>
