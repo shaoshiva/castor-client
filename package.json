@@ -1,15 +1,15 @@
 {
-  "name": "novius-live-client",
+  "name": "castor-client",
   "version": "0.1.0",
-  "description": "The Novius Live client",
+  "description": "The Castor Client",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git@gitlab.lyon.novius.fr:novius/novius-live-client.git"
+    "url": "git@github.com:shaoshiva/castor-client.git"
   },
-  "author": "viney@novius.fr",
+  "author": "shaoshiva@gmail.com",
   "license": "ISC"
 }

@@ -11,7 +11,7 @@
         module.exports = factory();
     } else {
         // Browser globals (root is window)
-        root.NoviusLiveClient = factory();
+        root.CastorClient = factory();
     }
 }(this, function () {
 
@@ -40,40 +40,47 @@
                 $('<iframe sandbox="allow-same-origin allow-scripts allow-forms" src="'+options.url+'" class="fullscreen"></iframe>')
                     .on('load', function() {
                         const $iframe = $(this);
-                        const $body = $iframe.contents().find('body');
 
-                        $body.css({ overflow: 'hidden'});
+                        try {
+                            // deal with older browsers
+                            const $iframeContent = $iframe.contents();
+                            const $body = $iframeContent.find('body');
 
-                        // Zoom
-                        if (options.zoom) {
-                            $iframe.contents().find('body').css({
-                                '-ms-zoom': options.zoom,
-                                '-moz-transform': 'scale('+options.zoom+')',
-                                '-moz-transform-origin': 'center 0',
-                                '-o-transform': 'scale('+options.zoom+')',
-                                '-o-transform-origin': 'center 0',
-                                '-webkit-transform': 'scale('+options.zoom+')',
-                                '-webkit-transform-origin': 'center 0',
-                            });
-                        }
+                            $body.css({ overflow: 'hidden'});
 
-                        // Auto scroll
-                        if (options.autoScroll) {
+                            // Zoom
+                            if (options.zoom) {
+                                $body.css({
+                                    '-ms-zoom': options.zoom,
+                                    '-moz-transform': 'scale('+options.zoom+')',
+                                    '-moz-transform-origin': 'center 0',
+                                    '-o-transform': 'scale('+options.zoom+')',
+                                    '-o-transform-origin': 'center 0',
+                                    '-webkit-transform': 'scale('+options.zoom+')',
+                                    '-webkit-transform-origin': 'center 0',
+                                });
+                            }
 
-                            setTimeout(function autoScroll() {
-                                if ($body.length) {
-                                    const documentHeight = $body.get(0).scrollHeight;
-                                    $body.animate(
-                                        {
-                                            scrollTop: documentHeight
-                                        },
-                                        {
-                                            duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
-                                            easing: 'linear',
-                                        }
-                                    );
-                                }
-                            }, options.autoScrollDelay || 2000);
+                            // Auto scroll
+                            if (options.autoScroll) {
+
+                                setTimeout(function autoScroll() {
+                                    if ($body.length) {
+                                        const documentHeight = $body.get(0).scrollHeight;
+                                        $body.animate(
+                                            {
+                                                scrollTop: documentHeight
+                                            },
+                                            {
+                                                duration: (documentHeight / options.autoScrollSpeed || 20) * 1000,
+                                                easing: 'linear',
+                                            }
+                                        );
+                                    }
+                                }, options.autoScrollDelay || 2000);
+                            }
+                        } catch(err){
+                            // do nothing
                         }
                     })
             );
@@ -121,7 +128,7 @@
     /**
      * The client
      */
-    class NoviusLiveClient
+    class CastorClient
     {
         constructor($container, options) {
             this.scenarioHandlers = {};
@@ -511,5 +518,5 @@
         }
     }
 
-    return NoviusLiveClient;
+    return CastorClient;
 }));
